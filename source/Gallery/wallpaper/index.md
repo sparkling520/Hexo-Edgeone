@@ -1,7 +1,7 @@
 ---
 title: 壁纸
 date: 2026-07-25 11:02:31
-top_image: /img/top_img_wallpaper.png
+top_img: /img/top_img_wallpaper.png
 ---
 
 
