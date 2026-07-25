@@ -19,10 +19,12 @@ nav:
 
 menu:
    首页: / || fas fa-home
-   动态: /shuoshuo/ || fas fa-message
+   动态: /shuoshuo/ || fas fa-star
+   图库: /gallery/ || fas fa-image
    标签: /tags/ || fas fa-tag
    分类: /categories/ || fas fa-list
    友情链接: /link/ || fas fa-link
+
   # List||fas fa-list:
   #   Music: /music/ || fas fa-music
   #   Movie: /movies/ || fas fa-video
@@ -269,12 +271,12 @@ footer:
   nav:
   owner:
     enable: true
-    since: 2025-2026
+    since: 2025
   # Copyright of theme and framework
   copyright:
     enable: true
     version: true
-  custom_text: <span id="runtime-footer">本站已运行 <span id="runtime-days">0</span> 天 <span id="runtime-hours">0</span> 小时 <span id="runtime-mins">0</span> 分 <span id="runtime-secs">0</span> 秒</span><br><img src="/img/beian.png" style="width:14px;height:14px;vertical-align:middle;margin-right:3px;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=23022902000116" rel="noreferrer" target="_blank" style="margin-right:12px;">黑公网安备23022902000116号</a><a href="https://beian.miit.gov.cn" target="_blank">黑ICP备2025036541号-2</a>
+  custom_text:
 
 # --------------------------------------
 # Aside Settings
@@ -909,13 +911,11 @@ click_heart:
 clickShowText:
   enable: true
   text:
-   - 红
-   - 橙
-   - 黄
-   - 绿
-   - 蓝
-   - 靛
-   - 紫
+   - 宫
+   - 商
+   - 角
+   - 徵
+   - 羽
   fontSize: 15px
   random: false
   mobile: false
@@ -928,7 +928,7 @@ clickShowText:
 # https://github.com/francoischalifour/medium-zoom
 # https://fancyapps.com/fancybox/
 # Leave it empty if you don't need lightbox
-lightbox:
+lightbox: fancybox
 
 # --------------------------------------
 # Tag Plugins settings

@@ -12,6 +12,7 @@
     "version": "8.1.2"
   },
   "dependencies": {
+    "@fancyapps/ui": "^6.1.14",
     "add": "^2.0.9",
     "hexo": "^8.0.0",
     "hexo-deployer-git": "^4.0.0",

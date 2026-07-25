@@ -7,3 +7,14 @@ top_img: /img/shuoshuo-top.jpg
 keywords: 动态
 limit: 10
 ---
+
+
+{% timeline 2022 %}
+
+<!-- timeline 01-02 -->
+
+这是测试页面
+
+<!-- endtimeline -->
+
+{% endtimeline %}

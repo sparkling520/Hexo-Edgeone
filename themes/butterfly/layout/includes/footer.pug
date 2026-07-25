@@ -21,19 +21,40 @@ if nav
       - const currentYear = new Date().getFullYear()
       - const sinceYear = owner.since
       span.copyright
-        if sinceYear && sinceYear != currentYear
-          != `&copy;&nbsp;${sinceYear} - ${currentYear} By ${config.author}`
-        else
-          != `&copy;&nbsp;${currentYear} By ${config.author}`
+        span.footer-badge-copyright.footer-badge-custom
+          span.footer-badge-label ©
+          span.footer-badge-value #{sinceYear}-#{currentYear}
+        != ` By ${config.title}`
     if copyright.enable
       - const v = copyright.version ? getVersion() : false
+      - const hexoVer = v ? v.hexo : '8.1.2'
+      - const themeVer = v ? v.theme : '5.6.0'
       span.framework-info
-        if owner.enable && nav
-          span.footer-separator |
-        span= _p('footer.framework') + ' '
-        a(href='https://hexo.io')= `Hexo${ v ? ' ' + v.hexo : '' }`
+        a(href='https://hexo.io' target='_blank' title='Hexo')
+          img.footer-badge(src=`https://img.shields.io/badge/框架-Hexo%20${hexoVer}-3B82F6?style=flat-square` alt='Hexo')
         span.footer-separator |
-        span= _p('footer.theme') + ' '
-        a(href='https://github.com/jerryc127/hexo-theme-butterfly')= `Butterfly${ v ? ' ' + v.theme : '' }`
+        a(href='https://github.com/jerryc127/hexo-theme-butterfly' target='_blank' title='Butterfly')
+          img.footer-badge(src=`https://img.shields.io/badge/主题-Butterfly%20${themeVer}-F47421?style=flat-square` alt='Butterfly')
+    span.footer-badge-group
+      span#runtime-footer.footer-badge-custom
+        span.footer-badge-label 本站已运行
+        span.footer-badge-value
+          span#runtime-days 0
+          |  天 
+          span#runtime-hours 0
+          |  小时 
+          span#runtime-mins 0
+          |  分 
+          span#runtime-secs 0
+          |  秒
+    span.footer-badge-group
+      a(href='http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=23022902000116' rel='noreferrer' target='_blank')
+        span.footer-badge-custom
+          span.footer-badge-label
+            img.beian-badge-icon(src='/img/beian.png' alt='')
+            | 黑公网安备
+          span.footer-badge-value.beian-value 23022902000116
+      a(href='https://beian.miit.gov.cn' target='_blank')
+        img.footer-badge(src='https://img.shields.io/badge/黑ICP备-2025036541号--2-006f1d?style=flat-square' alt='ICP备案')
   if theme.footer.custom_text
     .footer_custom_text!= theme.footer.custom_text
