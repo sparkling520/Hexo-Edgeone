@@ -20,7 +20,7 @@ nav:
 menu:
    首页: / || fas fa-home
    动态: /shuoshuo/ || fas fa-star
-   图库: /gallery/ || fas fa-image
+   图库: /Gallery/ || fas fa-image
    标签: /tags/ || fas fa-tag
    分类: /categories/ || fas fa-list
    友情链接: /link/ || fas fa-link
