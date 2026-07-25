@@ -3,40 +3,8 @@
   date: 2026-06-20 23:33:26
   key: key-1
   content: |
-    这是一条包含本地图片的说说测试。
+    这是一张动画风格的壁纸。
     ![这是我的封面图](/img/shuoshuo/banner.jpg)
   tags:
     - 壁纸
 
-- author: Spark
-  avatar: 
-  date: 2026-07-25 10:00:00
-  content: |
-    <div class="timeline blue">
-
-      <div class="timeline-item headline">
-        <div class="timeline-item-title">
-          <div class="item-circle"><p>2026</p></div>
-        </div>
-      </div>
-      <div class="timeline-item">
-        <div class="timeline-item-title">
-          <div class="item-circle"><p>01-02</p></div>
-        </div>
-        <div class="timeline-item-content"><p>这是测试页面</p></div>
-      </div>  
-
-      <div class="timeline-item headline">
-        <div class="timeline-item-title">
-          <div class="item-circle"><p>2022</p></div>
-        </div>
-      </div>
-      <div class="timeline-item">
-        <div class="timeline-item-title">
-          <div class="item-circle"><p>01-02</p></div>
-        </div>
-        <div class="timeline-item-content"><p>这是测试页面</p></div>
-      </div>
-    </div>
-  tags:
-    - Timeline 
