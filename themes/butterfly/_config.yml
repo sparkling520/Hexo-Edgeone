@@ -486,7 +486,7 @@ math:
 search: 
   # Choose: algolia_search / local_search / docsearch
   # leave it empty if you don't need search
-  use: local_search
+  use: docsearch
   placeholder:
 
   # Algolia Search
@@ -512,9 +512,9 @@ search:
   # Docsearch
   # https://docsearch.algolia.com/
   docsearch:
-    appId:
-    apiKey:
-    indexName:
+    appId: 8SQ2RK2JHW
+    apiKey: b0c416b66d263c581ecc4ecf50f485fb&experienceId=8SQ2RK2JHW
+    indexName: long_luvhub_cn_8sq2rk2jhw_pages
     option:
 
 # --------------------------------------
