@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>冰箱储藏</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: #eef2f5; color: #333; min-height: 100vh;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 28px 20px; }
+header { margin-bottom: 18px; }
+header h1 { font-size: 22px; font-weight: 600; }
+.back {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-bottom: 12px; cursor: pointer; color: #555;
+  font-size: 14px; background: none; border: none;
+}
+.back:hover { color: #1a73e8; }
+
+/* ===== 首页：中科美菱低温冰箱（关门） ===== */
+.fridge-wrapper {
+  display: flex; justify-content: center; padding: 20px 0 40px;
+  perspective: 1000px;
+}
+.fridge-closed {
+  position: relative;
+  width: 260px;
+  cursor: pointer;
+  transition: transform .3s;
+}
+.fridge-closed:hover {
+  transform: translateY(-4px);
+}
+/* 冰箱主体（白色门） */
+.fridge-door {
+  position: relative;
+  width: 260px;
+  height: 620px;
+  background: linear-gradient(135deg, #f5f6f7 0%, #e8eaec 50%, #dcdee0 100%);
+  border: 2px solid #c5c9ce;
+  border-radius: 4px 4px 0 0;
+  box-shadow:
+    inset 3px 0 6px rgba(255,255,255,0.8),
+    inset -2px 0 4px rgba(0,0,0,0.05),
+    8px 12px 28px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+/* 门表面微纹理 */
+.fridge-door::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 28px,
+    rgba(255,255,255,0.25) 28px,
+    rgba(255,255,255,0.25) 29px
+  );
+  pointer-events: none;
+}
+/* 左侧蓝色竖条 */
+.fridge-blue-strip {
+  position: absolute;
+  top: 0; left: 0;
+  width: 52px; height: 100%;
+  background: linear-gradient(90deg, #1a6dcc, #2b7cdd, #3a8be8);
+  box-shadow: 2px 0 6px rgba(0,0,0,0.15);
+  z-index: 2;
+}
+/* 控制面板 */
+.fridge-control {
+  position: absolute;
+  top: 140px; left: 40px;
+  width: 120px; height: 68px;
+  background: linear-gradient(135deg, #2b7cdd, #1a6dcc);
+  border-radius: 8px 18px 18px 8px;
+  box-shadow:
+    3px 4px 10px rgba(0,0,0,0.25),
+    inset 1px 1px 2px rgba(255,255,255,0.3);
+  z-index: 3;
+  padding: 8px 10px;
+}
+.fridge-control-display {
+  width: 44px; height: 24px;
+  background: #1a1a2e;
+  border-radius: 3px;
+  margin-bottom: 5px;
+  border: 1px solid #0f0f1a;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+  position: relative;
+}
+.fridge-control-display::after {
+  content: '-30°';
+  position: absolute;
+  top: 2px; left: 4px;
+  font-size: 10px;
+  color: #ff6b6b;
+  font-family: monospace;
+  font-weight: bold;
+}
+.fridge-control-keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 2px;
+  margin-left: 52px;
+  margin-top: -29px;
+}
+.fridge-key {
+  width: 10px; height: 10px;
+  background: #fff;
+  border-radius: 1px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+/* 小把手 */
+.fridge-handle {
+  position: absolute;
+  top: 240px; left: 44px;
+  width: 22px; height: 14px;
+  background: linear-gradient(180deg, #e0e0e0, #b0b0b0);
+  border-radius: 3px;
+  border: 1px solid #888;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+  z-index: 3;
+}
+.fridge-handle::after {
+  content: '';
+  position: absolute;
+  right: -4px; top: 3px;
+  width: 5px; height: 6px;
+  background: #999;
+  border-radius: 0 2px 2px 0;
+}
+/* 顶部logo */
+.fridge-logo {
+  position: absolute;
+  top: 18px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  z-index: 2;
+}
+.fridge-logo-icon {
+  width: 18px; height: 18px;
+  background: #2b7cdd;
+  border-radius: 3px;
+  position: relative;
+  transform: rotate(45deg);
+}
+.fridge-logo-icon::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px; height: 8px;
+  background: #fff;
+  border-radius: 2px;
+}
+.fridge-logo-text {
+  font-size: 13px;
+  color: #cc2222;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+/* 右侧铰链 */
+.fridge-hinge {
+  position: absolute;
+  right: -3px;
+  width: 8px; height: 14px;
+  background: linear-gradient(90deg, #a0a6ad, #c5c9ce, #a0a6ad);
+  border-radius: 2px;
+  z-index: 3;
+  box-shadow: 1px 0 2px rgba(0,0,0,0.2);
+}
+.fridge-hinge.top { top: 60px; }
+.fridge-hinge.mid { top: 310px; }
+.fridge-hinge.bottom { top: 540px; }
+/* -40°C 徽章 */
+.fridge-badge {
+  position: absolute;
+  top: -18px; left: -55px;
+  width: 80px; height: 42px;
+  background: linear-gradient(180deg, #4a9af0, #1a6dcc);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+  z-index: 5;
+  font-family: Arial, sans-serif;
+}
+.fridge-badge::before {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px; right: 3px; bottom: 3px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 50%;
+}
+/* 底部压缩机室 */
+.fridge-compressor {
+  height: 70px;
+  background: linear-gradient(180deg, #2b7cdd, #155aa8);
+  border-radius: 0 0 4px 4px;
+  margin-top: -2px;
+  position: relative;
+  box-shadow: 8px 6px 16px rgba(0,0,0,0.2);
+}
+.fridge-comp-panel {
+  position: absolute;
+  left: 18px; top: 16px;
+  width: 60px; height: 38px;
+  background: linear-gradient(180deg, #1a5bb0, #0f3e7d);
+  border-radius: 3px;
+  border: 1px solid #0a2d5a;
+}
+.fridge-comp-panel::after {
+  content: '';
+  position: absolute;
+  bottom: 6px; left: 10px;
+  width: 40px; height: 16px;
+  background: #c0c8d0;
+  border-radius: 2px;
+}
+.fridge-comp-grille {
+  position: absolute;
+  right: 18px; top: 16px;
+  width: 140px; height: 38px;
+  background: #1a5bb0;
+  border-radius: 3px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2px;
+  padding: 3px;
+}
+.fridge-grille-cell {
+  background: #0a2d5a;
+  border-radius: 1px;
+}
+.fridge-foot {
+  position: absolute;
+  bottom: -8px;
+  width: 20px; height: 10px;
+  background: #222;
+  border-radius: 0 0 10px 10px;
+}
+.fridge-foot.left { left: 25px; }
+.fridge-foot.right { right: 25px; }
+/* 点击提示 */
+.fridge-hint {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 13px;
+  color: #888;
+}
+.fridge-hint span { color: #2b7cdd; font-weight: 600; }
+
+/* ===== 冰箱开门内部视图 ===== */
+.fridge-interior {
+  position: relative;
+  width: 420px;
+}
+.fridge-interior-frame {
+  position: relative;
+  background: linear-gradient(180deg, #f5f7f9 0%, #e8ecef 100%);
+  border: 3px solid #b0bac4;
+  border-radius: 6px;
+  padding: 24px 14px 20px;
+  box-shadow:
+    inset 4px 0 8px rgba(255,255,255,0.6),
+    inset -4px 0 8px rgba(255,255,255,0.6),
+    inset 0 -4px 8px rgba(0,0,0,0.08),
+    6px 10px 24px rgba(0,0,0,0.15);
+}
+.fridge-interior-top {
+  position: absolute;
+  top: -26px; left: -3px; right: -3px;
+  height: 26px;
+  background: linear-gradient(180deg, #d0d7de, #b0bac4);
+  border-radius: 6px 6px 0 0;
+  border: 3px solid #b0bac4;
+  border-bottom: none;
+}
+.fridge-interior-door {
+  position: absolute;
+  top: 0; left: -40px;
+  width: 40px; height: 100%;
+  background: linear-gradient(90deg, #d8dde2, #e8ecef);
+  border: 2px solid #b0bac4;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  box-shadow: -4px 4px 12px rgba(0,0,0,0.1);
+}
+.fridge-interior-door::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 10px,
+    rgba(255,255,255,0.25) 10px,
+    rgba(255,255,255,0.25) 11px
+  );
+}
+.fridge-interior-compressor {
+  height: 48px;
+  background: linear-gradient(180deg, #2b7cdd, #155aa8);
+  border-radius: 0 0 6px 6px;
+  margin-top: -2px;
+  position: relative;
+  box-shadow: 6px 6px 16px rgba(0,0,0,0.18);
+}
+.fridge-interior-compressor::after {
+  content: '';
+  position: absolute;
+  right: 16px; top: 10px;
+  width: 120px; height: 28px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(0,0,0,0.15) 0,
+    rgba(0,0,0,0.15) 7px,
+    transparent 7px,
+    transparent 12px
+  );
+  border-radius: 3px;
+}
+
+/* 层架 */
+.shelf {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 7px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid #c5ccd3;
+}
+.shelf:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.shelf-wrapper {
+  position: relative;
+  padding-left: 14px;
+}
+.shelf-label {
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+  font-size: 10px;
+  color: #7a8490;
+  font-weight: 600;
+  writing-mode: vertical-rl;
+}
+
+/* 抽屉正面（不锈钢） */
+.drawer-front {
+  flex: 1;
+  position: relative;
+  height: 115px;
+  background: linear-gradient(180deg, #e0e5ea 0%, #c8cfd6 50%, #b8c0c8 100%);
+  border: 1.5px solid #9aa3ac;
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: default;
+  box-shadow: inset 0 2px 3px rgba(255,255,255,0.7);
+  transition: box-shadow .15s;
+}
+.drawer-front.has-persons { cursor: pointer; border-color: #2b7cdd; }
+.drawer-front.has-persons:hover {
+  box-shadow:
+    inset 0 2px 3px rgba(255,255,255,0.7),
+    0 4px 12px rgba(43, 124, 221, 0.35);
+}
+/* 不锈钢竖纹 */
+.drawer-front::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 16px,
+    rgba(255,255,255,0.18) 16px,
+    rgba(255,255,255,0.18) 17px
+  );
+  pointer-events: none;
+}
+/* U型把手 */
+.drawer-u-handle {
+  position: absolute;
+  bottom: 5px; right: 5px;
+  width: 26px; height: 14px;
+  border: 2px solid #7a8490;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 2;
+  pointer-events: none;
+}
+.drawer-u-handle::before,
+.drawer-u-handle::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  width: 3px; height: 3px;
+  background: #7a8490;
+  border-radius: 50%;
+}
+.drawer-u-handle::before { left: -3px; }
+.drawer-u-handle::after { right: -3px; }
+.drawer-front.has-persons .drawer-u-handle { border-color: #2b7cdd; }
+.drawer-front.has-persons .drawer-u-handle::before,
+.drawer-front.has-persons .drawer-u-handle::after { background: #2b7cdd; }
+
+/* 抽屉编号 */
+.drawer-num {
+  position: absolute;
+  top: 3px; left: 5px;
+  font-size: 9px;
+  color: #6a7480;
+  font-weight: 600;
+  z-index: 2;
+}
+.drawer-front.has-persons .drawer-num { color: #2b7cdd; }
+
+/* 抽屉上的缩略图 */
+.drawer-thumbs {
+  position: absolute;
+  top: 18px; left: 3px; right: 34px; bottom: 22px;
+  display: flex;
+  gap: 2px;
+}
+.drawer-thumb {
+  flex: 1;
+  position: relative;
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.25);
+  border: 1px solid rgba(0,0,0,0.1);
+}
+.drawer-thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.drawer-thumb-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 2px;
+  background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+  color: #fff;
+  font-size: 9px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== 抽屉页布局 ===== */
+.album-layout {
+  display: flex; gap: 24px; align-items: flex-start;
+}
+.mini-nav {
+  position: sticky; top: 20px;
+  width: 160px; flex-shrink: 0;
+}
+.mini-nav-title {
+  font-size: 13px; color: #777; margin-bottom: 8px; text-align: center;
+}
+.mini-fridge {
+  position: relative;
+  width: 120px;
+  margin: 0 auto;
+}
+.mini-fridge-door {
+  position: relative;
+  width: 120px;
+  height: 320px;
+  background: linear-gradient(135deg, #f5f6f7, #dcdee0);
+  border: 2px solid #c5c9ce;
+  border-radius: 3px 3px 0 0;
+  box-shadow: 3px 4px 12px rgba(0,0,0,0.15);
+  overflow: hidden;
+}
+.mini-fridge-door::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 14px,
+    rgba(255,255,255,0.25) 14px,
+    rgba(255,255,255,0.25) 15px
+  );
+  pointer-events: none;
+}
+.mini-blue-strip {
+  position: absolute;
+  top: 0; left: 0;
+  width: 22px; height: 100%;
+  background: linear-gradient(90deg, #1a6dcc, #2b7cdd, #3a8be8);
+  z-index: 2;
+}
+.mini-control {
+  position: absolute;
+  top: 70px; left: 16px;
+  width: 48px; height: 28px;
+  background: linear-gradient(135deg, #2b7cdd, #1a6dcc);
+  border-radius: 4px 10px 10px 4px;
+  z-index: 3;
+  box-shadow: 1px 2px 4px rgba(0,0,0,0.2);
+}
+.mini-handle {
+  position: absolute;
+  top: 120px; left: 18px;
+  width: 12px; height: 8px;
+  background: linear-gradient(180deg, #e0e0e0, #b0b0b0);
+  border-radius: 2px;
+  border: 1px solid #888;
+  z-index: 3;
+}
+.mini-logo {
+  position: absolute;
+  top: 10px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: #cc2222;
+  font-weight: 700;
+  z-index: 2;
+}
+.mini-fridge-bottom {
+  height: 36px;
+  background: linear-gradient(180deg, #2b7cdd, #155aa8);
+  border-radius: 0 0 3px 3px;
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.15);
+  position: relative;
+}
+.mini-fridge-bottom::after {
+  content: '';
+  position: absolute;
+  right: 10px; top: 8px;
+  width: 60px; height: 20px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(0,0,0,0.15) 0,
+    rgba(0,0,0,0.15) 5px,
+    transparent 5px,
+    transparent 9px
+  );
+  border-radius: 2px;
+}
+/* 迷你冰箱层标识（开门内部时用） */
+.mini-shelf {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid #c5ccd3;
+}
+.mini-shelf:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.mini-drawer {
+  flex: 1;
+  height: 28px;
+  background: linear-gradient(180deg, #e0e5ea, #b8c0c8);
+  border: 1px solid #9aa3ac;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+  transition: all .2s;
+}
+.mini-drawer.has-items { border-color: #2b7cdd; }
+.mini-drawer.active {
+  background: linear-gradient(180deg, #ffd54f, #ffb300);
+  border-color: #e6a800;
+  box-shadow: 0 0 6px rgba(255, 180, 0, 0.9);
+  z-index: 2;
+}
+.mini-drawer-num {
+  position: absolute;
+  top: 2px; left: 2px;
+  font-size: 7px;
+  color: #6a7480;
+  font-weight: 600;
+}
+.mini-drawer.has-items .mini-drawer-num { color: #2b7cdd; }
+.mini-drawer.active .mini-drawer-num { color: #8b6914; }
+
+/* 迷你冰箱：开门内部视图样式 */
+.mini-fridge-frame {
+  background: linear-gradient(180deg, #f5f7f9, #e8ecef);
+  border: 2px solid #b0bac4;
+  border-radius: 4px;
+  padding: 14px 6px 10px;
+  box-shadow: 2px 3px 8px rgba(0,0,0,0.12);
+  position: relative;
+}
+.mini-fridge-frame::before {
+  content: '';
+  position: absolute;
+  top: -12px; left: -2px; right: -2px;
+  height: 12px;
+  background: linear-gradient(180deg, #d0d7de, #b0bac4);
+  border-radius: 4px 4px 0 0;
+  border: 2px solid #b0bac4;
+  border-bottom: none;
+}
+.mini-fridge-side-door {
+  position: absolute;
+  top: 0; left: -16px;
+  width: 16px; height: 100%;
+  background: linear-gradient(90deg, #d8dde2, #e8ecef);
+  border: 1.5px solid #b0bac4;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  box-shadow: -2px 2px 6px rgba(0,0,0,0.1);
+}
+
+.album-main { flex: 1; min-width: 0; }
+
+/* 人员标签 */
+.person-tabs {
+  display: flex; gap: 6px; margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.person-tab {
+  padding: 6px 14px;
+  background: #fff;
+  border: 1.5px solid #c5d3e0;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all .2s;
+  color: #555;
+}
+.person-tab:hover { border-color: #2b7cdd; color: #2b7cdd; }
+.person-tab.active {
+  background: #2b7cdd;
+  border-color: #2b7cdd;
+  color: #fff;
+}
+
+/* ===== 抽屉：不锈钢立体视图 ===== */
+.drawer-stage {
+  perspective: 1200px;
+  padding: 30px 40px 60px;
+  display: flex; justify-content: center;
+}
+.drawer-3d {
+  position: relative;
+  width: 600px;
+  transform-style: preserve-3d;
+  transform: rotateX(20deg);
+  transition: transform .5s;
+}
+.drawer-3d:hover { transform: rotateX(12deg); }
+
+.fridge-opening {
+  position: absolute;
+  top: -24px; left: -30px; right: -30px;
+  height: 50px;
+  background: linear-gradient(180deg, #d0d7de, #b0b9c2);
+  border-radius: 6px 6px 0 0;
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.fridge-opening::before {
+  content: '';
+  position: absolute;
+  bottom: -6px; left: 15px; right: 15px;
+  height: 6px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.15), transparent);
+}
+
+.drawer-body {
+  position: relative;
+  background: linear-gradient(180deg, #e8ecef 0%, #d0d7de 100%);
+  border: 2px solid #9aa3ac;
+  border-radius: 0 0 6px 6px;
+  padding: 22px 24px 26px;
+  box-shadow:
+    0 24px 48px rgba(0,0,0,0.2),
+    inset 0 2px 4px rgba(255,255,255,0.7);
+  transform: translateZ(30px);
+  transform-style: preserve-3d;
+}
+.drawer-body::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 24px,
+    rgba(255,255,255,0.18) 24px,
+    rgba(255,255,255,0.18) 25px
+  );
+  pointer-events: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.drawer-front-panel {
+  position: absolute;
+  bottom: -20px; left: -6px; right: -6px;
+  height: 24px;
+  background: linear-gradient(180deg, #c8cfd6, #aab4be);
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+  transform: rotateX(-90deg);
+  transform-origin: top;
+}
+.drawer-front-panel::before {
+  content: '';
+  position: absolute;
+  top: 4px; right: 30px;
+  width: 50px; height: 14px;
+  border: 2.5px solid #7a8490;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.drawer-side-left {
+  position: absolute;
+  top: 0; bottom: 0; left: -14px;
+  width: 14px;
+  background: linear-gradient(90deg, #9aa3ac, #c8cfd6);
+  border-radius: 4px 0 0 4px;
+  transform: rotateY(90deg);
+  transform-origin: right;
+}
+
+.drawer-dir {
+  position: absolute;
+  font-size: 11px;
+  color: #6a7480;
+  font-weight: 600;
+  z-index: 5;
+}
+.drawer-dir.top { top: 4px; left: 50%; transform: translateX(-50%); }
+.drawer-dir.back { left: -4px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+.drawer-dir.front { right: -4px; top: 50%; transform: translateY(-50%) rotate(90deg); }
+
+/* 格子网格 */
+.cell-grid {
+  display: grid;
+  gap: 6px;
+  background: rgba(150, 160, 170, 0.2);
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #b0bac4;
+  position: relative;
+  z-index: 1;
+}
+.cell {
+  position: relative;
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, #f5f7fa, #e4e9ee);
+  border: 1px solid #b0bac4;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  transition: all .15s;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.8);
+}
+.cell.has-img { cursor: pointer; border-color: #2b7cdd; }
+.cell.has-img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(43, 124, 221, 0.4);
+  z-index: 3;
+}
+.cell img { width: 100%; height: 100%; object-fit: cover; }
+.cell-num {
+  position: absolute; top: 2px; left: 4px;
+  font-size: 10px; color: #8a95a0; font-weight: 600;
+  pointer-events: none;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+}
+.cell.has-img .cell-num {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+}
+.cell-name {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 3px 5px;
+  background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+  color: #fff; font-size: 10px; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  opacity: 0; transition: opacity .15s;
+}
+.cell.has-img:hover .cell-name { opacity: 1; }
+
+/* ===== 灯箱 ===== */
+.lightbox {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: none; align-items: center; justify-content: center;
+  z-index: 200;
+}
+.lightbox.active { display: flex; }
+.lightbox img {
+  max-width: 92vw; max-height: 90vh;
+  object-fit: contain; border-radius: 4px;
+}
+.lightbox-close {
+  position: absolute; top: 14px; right: 22px;
+  font-size: 34px; color: #fff; cursor: pointer;
+  user-select: none; line-height: 1;
+}
+.lightbox-prev, .lightbox-next {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  font-size: 44px; color: #fff; cursor: pointer;
+  padding: 14px; user-select: none;
+}
+.lightbox-prev { left: 6px; }
+.lightbox-next { right: 6px; }
+.lightbox-caption {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  color: #fff; font-size: 14px;
+  background: rgba(0,0,0,0.5); padding: 6px 16px; border-radius: 20px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header id="header"><h1>365室-30℃冰箱</h1></header>
+  <div id="content"></div>
+</div>
+
+<div id="lightbox" class="lightbox" onclick="lbClick(event)">
+  <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+  <span class="lightbox-prev" onclick="changeImg(-1)">&#8249;</span>
+  <span class="lightbox-next" onclick="changeImg(1)">&#8250;</span>
+  <img id="lb-img" src="" alt="">
+  <div class="lightbox-caption" id="lb-caption"></div>
+</div>
+
+<script>
+const layout = [[[], [], [0], []], [[], [1], [], []], [[], [], [], []], [[], [], [], []]];
+const persons = [{"layer": 1, "drawer": 3, "person": "WLH", "folder": "1-3-WLH", "cover": "img/1-3-WLH/WLH_21.jpg", "rows": 4, "cols": 4, "grid": [[null, null, null, null], [{"name": "WLH_21.jpg", "src": "img/1-3-WLH/WLH_21.jpg"}, {"name": "WLH_22.jpg", "src": "img/1-3-WLH/WLH_22.jpg"}, {"name": "WLH_23.jpg", "src": "img/1-3-WLH/WLH_23.jpg"}, {"name": "WLH_24.jpg", "src": "img/1-3-WLH/WLH_24.jpg"}], [null, null, null, null], [null, null, null, null]], "img_count": 4}, {"layer": 2, "drawer": 2, "person": "WSY", "folder": "2-2-WSY", "cover": "img/2-2-WSY/WSY_11.jpg", "rows": 4, "cols": 4, "grid": [[{"name": "WSY_11.jpg", "src": "img/2-2-WSY/WSY_11.jpg"}, {"name": "WSY_12.jpg", "src": "img/2-2-WSY/WSY_12.jpg"}, {"name": "WSY_13.jpg", "src": "img/2-2-WSY/WSY_13.jpg"}, null], [{"name": "WSY_21.jpg", "src": "img/2-2-WSY/WSY_21.jpg"}, {"name": "WSY_22.jpg", "src": "img/2-2-WSY/WSY_22.jpg"}, {"name": "WSY_23.jpg", "src": "img/2-2-WSY/WSY_23.jpg"}, null], [{"name": "WSY_31.jpg", "src": "img/2-2-WSY/WSY_31.jpg"}, {"name": "WSY_32.jpg", "src": "img/2-2-WSY/WSY_32.jpg"}, {"name": "WSY_33.jpg", "src": "img/2-2-WSY/WSY_33.jpg"}, null], [{"name": "WSY_41.jpg", "src": "img/2-2-WSY/WSY_41.jpg"}, {"name": "WSY_42.jpg", "src": "img/2-2-WSY/WSY_42.jpg"}, null, null]], "img_count": 11}];
+
+let currentImgList = [], currentImgIdx = 0;
+let currentDrawer = null;
+let currentPersonIdx = 0;
+
+function getDrawerPersons(layer, drawer) {
+  return layout[layer - 1][drawer - 1];
+}
+
+/* ===== 首页：关门冰箱 ===== */
+function renderHome() {
+  document.getElementById('header').innerHTML = '<h1>365室-30℃冰箱</h1>';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'fridge-wrapper';
+
+  const fridge = document.createElement('div');
+  fridge.className = 'fridge-closed';
+  fridge.onclick = renderInterior;
+
+  fridge.innerHTML = `
+    <div class="fridge-badge">-30°C</div>
+    <div class="fridge-door">
+      <div class="fridge-blue-strip"></div>
+      <div class="fridge-control">
+        <div class="fridge-control-display"></div>
+        <div class="fridge-control-keys">
+          ${Array(8).fill('<div class="fridge-key"></div>').join('')}
+        </div>
+      </div>
+      <div class="fridge-handle"></div>
+      <div class="fridge-logo">
+        <div class="fridge-logo-icon"></div>
+        <span class="fridge-logo-text">中科美菱</span>
+      </div>
+      <div class="fridge-hinge top"></div>
+      <div class="fridge-hinge mid"></div>
+      <div class="fridge-hinge bottom"></div>
+    </div>
+    <div class="fridge-compressor">
+      <div class="fridge-comp-panel"></div>
+      <div class="fridge-comp-grille">
+        ${Array(18).fill('<div class="fridge-grille-cell"></div>').join('')}
+      </div>
+      <div class="fridge-foot left"></div>
+      <div class="fridge-foot right"></div>
+    </div>
+  `;
+
+  wrapper.appendChild(fridge);
+
+  const hint = document.createElement('div');
+  hint.className = 'fridge-hint';
+  hint.innerHTML = '点击冰箱 <span>开门查看</span>';
+  wrapper.appendChild(hint);
+
+  const c = document.getElementById('content');
+  c.innerHTML = '';
+  c.appendChild(wrapper);
+  history.pushState({page:'home'}, '', '#');
+}
+
+/* ===== 开门内部视图 ===== */
+function renderInterior() {
+  document.getElementById('header').innerHTML =
+    `<button class="back" onclick="renderHome()"><span>&#8592;</span> 返回</button>
+     <h1 style="font-size:20px;">冰箱内部</h1>`;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'fridge-wrapper';
+
+  const outer = document.createElement('div');
+  outer.className = 'fridge-interior';
+
+  // 顶部
+  const top = document.createElement('div');
+  top.className = 'fridge-interior-top';
+  outer.appendChild(top);
+
+  // 左侧开门
+  const door = document.createElement('div');
+  door.className = 'fridge-interior-door';
+  outer.appendChild(door);
+
+  // 内部框架
+  const frame = document.createElement('div');
+  frame.className = 'fridge-interior-frame';
+
+  layout.forEach((row, li) => {
+    const shelfWrap = document.createElement('div');
+    shelfWrap.className = 'shelf-wrapper';
+
+    const label = document.createElement('div');
+    label.className = 'shelf-label';
+    label.textContent = (li + 1) + '层';
+    shelfWrap.appendChild(label);
+
+    const shelf = document.createElement('div');
+    shelf.className = 'shelf';
+
+    row.forEach((personIndices, di) => {
+      const drawer = document.createElement('div');
+      const hasItems = personIndices.length > 0;
+      drawer.className = 'drawer-front' + (hasItems ? ' has-persons' : '');
+
+      const num = document.createElement('span');
+      num.className = 'drawer-num';
+      num.textContent = (li + 1) + '-' + (di + 1);
+      drawer.appendChild(num);
+
+      const handle = document.createElement('div');
+      handle.className = 'drawer-u-handle';
+      drawer.appendChild(handle);
+
+      if (hasItems) {
+        const thumbs = document.createElement('div');
+        thumbs.className = 'drawer-thumbs';
+        personIndices.slice(0, 4).forEach(pIdx => {
+          const p = persons[pIdx];
+          const t = document.createElement('div');
+          t.className = 'drawer-thumb';
+          t.innerHTML =
+            `<img src="${p.cover}" alt="${p.person}">
+             <div class="drawer-thumb-label">${p.person}</div>`;
+          thumbs.appendChild(t);
+        });
+        drawer.appendChild(thumbs);
+        drawer.onclick = (e) => {
+          e.stopPropagation();
+          openDrawer(li + 1, di + 1);
+        };
+      }
+      shelf.appendChild(drawer);
+    });
+
+    shelfWrap.appendChild(shelf);
+    frame.appendChild(shelfWrap);
+  });
+
+  outer.appendChild(frame);
+
+  // 底部压缩机
+  const bottom = document.createElement('div');
+  bottom.className = 'fridge-interior-compressor';
+  outer.appendChild(bottom);
+
+  wrapper.appendChild(outer);
+  const c = document.getElementById('content');
+  c.innerHTML = '';
+  c.appendChild(wrapper);
+  history.pushState({page:'interior'}, '', '#interior');
+}
+
+/* ===== 迷你冰箱导航（开门内部视图） ===== */
+function buildMiniNav(activeLayer, activeDrawer) {
+  const nav = document.createElement('div');
+  nav.className = 'mini-nav';
+  nav.innerHTML = '<div class="mini-nav-title">冰箱位置</div>';
+  const fridge = document.createElement('div');
+  fridge.className = 'mini-fridge';
+
+  // 左侧门
+  const sideDoor = document.createElement('div');
+  sideDoor.className = 'mini-fridge-side-door';
+  fridge.appendChild(sideDoor);
+
+  const frame = document.createElement('div');
+  frame.className = 'mini-fridge-frame';
+
+  layout.forEach((row, li) => {
+    const shelf = document.createElement('div');
+    shelf.className = 'mini-shelf';
+    row.forEach((indices, di) => {
+      const hasItems = indices.length > 0;
+      const isActive = (li + 1 === activeLayer) && (di + 1 === activeDrawer);
+      const d = document.createElement('div');
+      d.className = 'mini-drawer' + (hasItems ? ' has-items' : '') + (isActive ? ' active' : '');
+      d.innerHTML = `<span class="mini-drawer-num">${li+1}-${di+1}</span>`;
+      if (hasItems) {
+        d.onclick = () => openDrawer(li + 1, di + 1);
+      }
+      shelf.appendChild(d);
+    });
+    frame.appendChild(shelf);
+  });
+
+  fridge.appendChild(frame);
+
+  const bottom = document.createElement('div');
+  bottom.className = 'mini-fridge-bottom';
+  fridge.appendChild(bottom);
+
+  nav.appendChild(fridge);
+  return nav;
+}
+
+/* ===== 打开抽屉 ===== */
+function openDrawer(layer, drawer) {
+  currentDrawer = {layer, drawer};
+  const personIndices = getDrawerPersons(layer, drawer);
+  if (personIndices.length === 0) return;
+  currentPersonIdx = 0;
+  renderDrawer();
+  history.pushState({page:'drawer', layer, drawer}, '', `#drawer-${layer}-${drawer}`);
+}
+
+function renderDrawer() {
+  const {layer, drawer} = currentDrawer;
+  const personIndices = getDrawerPersons(layer, drawer);
+  if (personIndices.length === 0) { renderInterior(); return; }
+
+  const p = persons[personIndices[currentPersonIdx]];
+
+  document.getElementById('header').innerHTML =
+    `<button class="back" onclick="renderInterior()"><span>&#8592;</span> 返回冰箱</button>
+     <h1 style="font-size:20px;">第 ${layer} 层 · 第 ${drawer} 抽屉 · ${p.person}</h1>`;
+
+  const layoutDiv = document.createElement('div');
+  layoutDiv.className = 'album-layout';
+  layoutDiv.appendChild(buildMiniNav(layer, drawer));
+
+  const main = document.createElement('div');
+  main.className = 'album-main';
+
+  if (personIndices.length > 1) {
+    const tabs = document.createElement('div');
+    tabs.className = 'person-tabs';
+    personIndices.forEach((pIdx, i) => {
+      const tab = document.createElement('div');
+      tab.className = 'person-tab' + (i === currentPersonIdx ? ' active' : '');
+      tab.textContent = persons[pIdx].person;
+      tab.onclick = () => {
+        currentPersonIdx = i;
+        renderDrawer();
+      };
+      tabs.appendChild(tab);
+    });
+    main.appendChild(tabs);
+  }
+
+  // 立体抽屉
+  const stage = document.createElement('div');
+  stage.className = 'drawer-stage';
+  const d3d = document.createElement('div');
+  d3d.className = 'drawer-3d';
+
+  const opening = document.createElement('div');
+  opening.className = 'fridge-opening';
+  d3d.appendChild(opening);
+
+  const body = document.createElement('div');
+  body.className = 'drawer-body';
+  body.innerHTML =
+    `<span class="drawer-dir top">上</span>
+     <span class="drawer-dir back">后</span>
+     <span class="drawer-dir front">前</span>`;
+
+  const sideLeft = document.createElement('div');
+  sideLeft.className = 'drawer-side-left';
+  body.appendChild(sideLeft);
+
+  const grid = document.createElement('div');
+  grid.className = 'cell-grid';
+  grid.style.gridTemplateColumns = `repeat(${p.cols}, 1fr)`;
+  grid.style.gridTemplateRows = `repeat(${p.rows}, 1fr)`;
+
+  let imgList = [];
+  let cellImgMap = {};
+
+  for (let r = 0; r < p.rows; r++) {
+    for (let c = 0; c < p.cols; c++) {
+      if (p.grid[r][c]) {
+        cellImgMap[r + ',' + c] = imgList.length;
+        imgList.push(p.grid[r][c]);
+      }
+    }
+  }
+  currentImgList = imgList;
+
+  // 左侧视角：左后右前，列从大到小
+  for (let r = 0; r < p.rows; r++) {
+    for (let c = p.cols - 1; c >= 0; c--) {
+      const cell = document.createElement('div');
+      const key = r + ',' + c;
+      const hasImg = key in cellImgMap;
+      cell.className = 'cell' + (hasImg ? ' has-img' : '');
+
+      const num = document.createElement('span');
+      num.className = 'cell-num';
+      num.textContent = (r + 1) + '-' + (c + 1);
+      cell.appendChild(num);
+
+      if (hasImg) {
+        const img = document.createElement('img');
+        img.src = p.grid[r][c].src;
+        img.alt = p.grid[r][c].name;
+        cell.appendChild(img);
+        const name = document.createElement('div');
+        name.className = 'cell-name';
+        name.textContent = p.grid[r][c].name;
+        cell.appendChild(name);
+        cell.onclick = () => openLightbox(cellImgMap[key]);
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  body.appendChild(grid);
+  d3d.appendChild(body);
+
+  const frontPanel = document.createElement('div');
+  frontPanel.className = 'drawer-front-panel';
+  d3d.appendChild(frontPanel);
+
+  stage.appendChild(d3d);
+  main.appendChild(stage);
+
+  layoutDiv.appendChild(main);
+  const c = document.getElementById('content');
+  c.innerHTML = '';
+  c.appendChild(layoutDiv);
+}
+
+/* ===== 灯箱 ===== */
+function openLightbox(imgIdx) {
+  currentImgIdx = imgIdx;
+  const img = currentImgList[currentImgIdx];
+  document.getElementById('lb-img').src = img.src;
+  document.getElementById('lb-caption').textContent = img.name;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lb-img').src = '';
+}
+function changeImg(dir) {
+  currentImgIdx = (currentImgIdx + dir + currentImgList.length) % currentImgList.length;
+  const img = currentImgList[currentImgIdx];
+  document.getElementById('lb-img').src = img.src;
+  document.getElementById('lb-caption').textContent = img.name;
+}
+function lbClick(e) {
+  if (e.target.id === 'lightbox') closeLightbox();
+}
+document.addEventListener('keydown', e => {
+  const lb = document.getElementById('lightbox');
+  if (!lb.classList.contains('active')) return;
+  if (e.key === 'Escape') closeLightbox();
+  if (e.key === 'ArrowLeft') changeImg(-1);
+  if (e.key === 'ArrowRight') changeImg(1);
+});
+
+/* ===== 路由 ===== */
+window.addEventListener('popstate', e => {
+  if (!e.state || e.state.page === 'home') renderHome();
+  else if (e.state.page === 'interior') renderInterior();
+  else if (e.state.page === 'drawer') {
+    currentDrawer = {layer: e.state.layer, drawer: e.state.drawer};
+    currentPersonIdx = 0;
+    renderDrawer();
+  }
+});
+if (location.hash.startsWith('#drawer-')) {
+  const parts = location.hash.split('-');
+  const l = parseInt(parts[1]), d = parseInt(parts[2]);
+  if (l && d) openDrawer(l, d);
+  else renderHome();
+} else if (location.hash === '#interior') {
+  renderInterior();
+} else {
+  renderHome();
+}
+</script>
+</body>
+</html>

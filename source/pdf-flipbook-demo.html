@@ -1,0 +1,303 @@
+<!--
+  ============================================================
+  PDF 3D 翻书效果演示页（独立测试用）
+  直接用浏览器打开这个文件就能看到效果
+  使用方法：把下面的 PDF 路径改成你自己的 PDF 文件名即可
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF 3D 翻书效果演示</title>
+<style>
+  /* ===== 页面整体样式（测试页用，嵌入文章时可删除） ===== */
+  body {
+    margin: 0;
+    padding: 20px;
+    background: #f0f0f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  h1 { text-align: center; color: #333; }
+
+  /* ===== 翻书容器样式（必须保留） ===== */
+  /* 外层容器：控制翻书的整体宽度和居中 */
+  .flipbook-wrapper {
+    max-width: 900px;        /* 桌面端最大宽度 */
+    margin: 0 auto;          /* 水平居中 */
+    padding: 20px 0;
+  }
+
+  /* 翻书主体：page-flip 会把内容渲染到这里 */
+  .flipbook-container {
+    width: 100%;
+    background: #fff;        /* 书页背景白色 */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15); /* 书本整体阴影 */
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  /* 每一页的样式：PDF 渲染出来的 canvas 会放在这里 */
+  .flipbook-page {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  /* 每一页里的 canvas：让 PDF 渲染结果填满整页 */
+  .flipbook-page canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* ===== 加载提示样式 ===== */
+  .flipbook-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    font-size: 16px;
+  }
+
+  /* ===== 翻页按钮样式 ===== */
+  .flipbook-controls {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .flipbook-btn {
+    padding: 10px 24px;
+    background: #1a73e8;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+  .flipbook-btn:hover { background: #1557b0; }
+  .flipbook-btn:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+  }
+
+  /* ===== 页码显示 ===== */
+  .flipbook-page-info {
+    text-align: center;
+    margin-top: 12px;
+    color: #666;
+    font-size: 14px;
+  }
+
+  /* ===== 手机端适配 ===== */
+  @media (max-width: 600px) {
+    .flipbook-wrapper { padding: 10px 0; }
+    .flipbook-btn { padding: 8px 18px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>📖 PDF 3D 翻书效果演示</h1>
+
+<!-- ============================================================
+     翻书 HTML 结构（嵌入 Hexo 文章时，从这里开始复制）
+     ============================================================ -->
+
+<!-- 外层包裹容器 -->
+<div class="flipbook-wrapper" id="myFlipbookWrapper">
+
+  <!-- 加载中提示（PDF 渲染完成前显示） -->
+  <div class="flipbook-loading" id="flipbookLoading">
+    📄 正在加载 PDF，请稍候...
+  </div>
+
+  <!-- 翻书容器（PDF 渲染好后会填充到这里） -->
+  <div class="flipbook-container" id="flipbookContainer" style="display:none;"></div>
+
+  <!-- 翻页按钮 -->
+  <div class="flipbook-controls" id="flipbookControls" style="display:none;">
+    <button class="flipbook-btn" onclick="myFlipbook.flipPrev()">⬅ 上一页</button>
+    <button class="flipbook-btn" onclick="myFlipbook.flipNext()">下一页 ➡</button>
+  </div>
+
+  <!-- 页码显示 -->
+  <div class="flipbook-page-info" id="flipbookPageInfo" style="display:none;"></div>
+
+</div>
+
+<!-- ============================================================
+     JavaScript 代码部分
+     ============================================================ -->
+<script>
+/* ============================================================
+   配置区：在这里修改 PDF 文件路径
+   路径以 / 开头（根相对路径），对应 Hexo 的 source 目录
+   ============================================================ */
+const PDF_URL = '/pdfs/sample.pdf';  // ← 改成你的 PDF 文件名
+
+/* ============================================================
+   步骤 1：动态加载所需的 JS 库（全部走 CDN，无需本地安装）
+   - PDF.js：负责把 PDF 文件渲染成图片
+   - page-flip：负责实现 3D 翻书动画效果
+   ============================================================ */
+
+// 用 Promise 包装脚本加载，确保按顺序加载
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('加载失败: ' + src));
+    document.head.appendChild(script);
+  });
+}
+
+// 主函数：加载库 → 渲染 PDF → 初始化翻书
+async function initFlipbook() {
+  try {
+    // ---- 加载 PDF.js 库（3.11 稳定版，从 jsDelivr CDN 加载） ----
+    // pdf.min.js 是主库
+    await loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js');
+    // 还需要告诉 PDF.js 它的 worker 文件在哪里（worker 负责后台解析 PDF）
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+    // ---- 加载 page-flip 库（2.x 版本，3D 翻书动画） ----
+    await loadScript('https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js');
+
+    // ---- 加载完成，开始渲染 PDF ----
+    await renderPdfToFlipbook(PDF_URL);
+
+  } catch (err) {
+    // 如果加载出错，显示错误信息
+    document.getElementById('flipbookLoading').innerHTML =
+      '❌ 加载失败：' + err.message + '<br>请检查网络连接或 PDF 文件路径';
+    console.error(err);
+  }
+}
+
+/* ============================================================
+   步骤 2：用 PDF.js 把每一页渲染成 canvas，然后交给 page-flip
+   ============================================================ */
+async function renderPdfToFlipbook(pdfUrl) {
+  const loadingEl = document.getElementById('flipbookLoading');
+  const containerEl = document.getElementById('flipbookContainer');
+  const controlsEl = document.getElementById('flipbookControls');
+  const pageInfoEl = document.getElementById('flipbookPageInfo');
+
+  // ---- 2.1 加载 PDF 文件 ----
+  const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+  const totalPages = pdf.numPages;  // 总页数
+
+  // ---- 2.2 获取第一页的尺寸，用来设置书本比例 ----
+  const firstPage = await pdf.getPage(1);
+  const viewport = firstPage.getViewport({ scale: 1 });
+  const pageWidth = viewport.width;
+  const pageHeight = viewport.height;
+
+  // 设置容器的宽高比（让书本保持 PDF 的原始比例）
+  // 桌面端显示两页（左右摊开），所以宽度 × 2
+  const aspectRatio = (pageWidth * 2) / pageHeight;
+  containerEl.style.aspectRatio = (pageWidth * 2) + ' / ' + pageHeight;
+
+  // ---- 2.3 逐页渲染 PDF 为图片 ----
+  // 【v2 修复】渲染成图片 data URL，用 loadFromImages 加载
+  // 彻底避免 loadFromHTML 的 DOM 嵌套错误
+  const scale = 2;
+  const pageImages = [];
+
+  for (let i = 1; i <= totalPages; i++) {
+    const page = await pdf.getPage(i);
+    const scaledViewport = page.getViewport({ scale: scale });
+
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = scaledViewport.width;
+    canvas.height = scaledViewport.height;
+
+    // 把 PDF 页面渲染到 canvas 上
+    await page.render({
+      canvasContext: context,
+      viewport: scaledViewport
+    }).promise;
+
+    // 转成图片 data URL
+    pageImages.push(canvas.toDataURL('image/png'));
+
+    // 更新加载进度
+    loadingEl.innerHTML = `📄 正在渲染第 ${i} / ${totalPages} 页...`;
+  }
+
+  // ---- 2.4 初始化 page-flip 翻书效果 ----
+  // 兼容不同版本的全局变量名（PageFlip 或 St.PageFlip）
+  const PageFlipClass = window.PageFlip || (window.St && window.St.PageFlip);
+  if (!PageFlipClass) {
+    throw new Error('page-flip 库加载失败，请检查网络或 CDN 地址');
+  }
+
+  const pageFlip = new PageFlipClass(containerEl, {
+    width: pageWidth,           // 单页宽度（PDF 原始像素）
+    height: pageHeight,         // 单页高度
+    size: 'stretch',            // 自适应容器宽度
+    minWidth: 300,              // 最小宽度（手机端）
+    maxWidth: 1000,             // 最大宽度
+    minHeight: 400,
+    maxHeight: 800,
+    drawShadow: true,           // 开启翻页阴影（更真实）
+    flippingTime: 800,          // 翻页动画时长（毫秒）
+    usePortrait: true,          // 手机竖屏时自动切换为单页模式
+    startPage: 0,               // 从第 0 页开始（第一页）
+    clickEventForward: true,    // 允许点击翻页
+    showCover: true,            // 显示封面（单页开始）
+    mobileScrollSupport: true,  // 手机端支持触摸滑动
+    swipeDistance: 50,          // 滑动触发翻页的最小距离
+  });
+
+  // 【v2 修复】用 loadFromImages 加载图片数组，最稳定的方式
+  pageFlip.loadFromImages(pageImages);
+
+  // 把翻书对象挂到全局，方便按钮调用
+  window.myFlipbook = pageFlip;
+
+  // ---- 2.5 页码更新回调 ----
+  pageFlip.on('flip', (e) => {
+    updatePageInfo(e.data + 1, totalPages);
+  });
+
+  // ---- 2.6 显示翻书，隐藏加载提示 ----
+  loadingEl.style.display = 'none';
+  containerEl.style.display = 'block';
+  controlsEl.style.display = 'flex';
+  pageInfoEl.style.display = 'block';
+  updatePageInfo(1, totalPages);
+}
+
+/* ============================================================
+   辅助函数：更新页码显示
+   ============================================================ */
+function updatePageInfo(current, total) {
+  document.getElementById('flipbookPageInfo').textContent =
+    `第 ${current} 页 / 共 ${total} 页`;
+}
+
+/* ============================================================
+   启动：页面加载完成后开始初始化
+   ============================================================ */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initFlipbook);
+} else {
+  initFlipbook();
+}
+</script>
+
+<!-- ============================================================
+     翻书 HTML 结构（嵌入 Hexo 文章时，到这里结束复制）
+     ============================================================ -->
+
+</body>
+</html>

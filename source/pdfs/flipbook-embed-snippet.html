@@ -1,0 +1,410 @@
+
+<!-- ============================================================
+     PDF 3D 翻书效果 - Hexo 文章嵌入代码（v5 真实音效版）
+     
+     v5 改动：
+     - ✅ 去掉底部翻页按钮（直接点击书页翻页）
+     - ✅ 用 5 个真实翻书音效，每次随机播放一个
+     
+     使用方法：
+     1. 把你的 PDF 文件放到 source/pdfs/ 目录下
+     2. 音效文件放在 source/pdfs/sounds/ 目录下（flip1.mp3 ~ flip5.mp3）
+     3. 把下面这段代码整个粘贴到你的 Markdown 文章里
+     4. 修改 PDF_URL 为你的 PDF 文件名（以 / 开头）
+
+     依赖库（全部 CDN 自动加载，无需手动安装）：
+     - PDF.js v3.11.174  →  渲染 PDF 页面
+     - page-flip v2.0.7  →  3D 翻书动画效果
+     ============================================================ -->
+
+<!-- ===== 翻书外层容器（全屏的根元素） ===== -->
+<div id="flipbookRoot" style="max-width:900px;margin:0 auto;padding:20px 0;position:relative;">
+
+  <!-- ===== 工具栏 ===== -->
+  <div id="flipbookToolbar" style="display:none;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <!-- 左侧：页码 -->
+    <div id="flipbookPageInfoTop" style="color:#666;font-size:13px;"></div>
+    <!-- 右侧：功能按钮 -->
+    <div style="display:flex;gap:8px;">
+      <button onclick="toggleSound()" id="soundBtn"
+              style="padding:8px 14px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px;">
+        🔊 音效开
+      </button>
+      <button onclick="downloadPdf()"
+              style="padding:8px 14px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px;">
+        ⬇ 下载 PDF
+      </button>
+      <button onclick="toggleFullscreen()" id="fullscreenBtn"
+              style="padding:8px 14px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px;">
+        ⛶ 全屏
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== 加载提示 ===== -->
+  <div id="flipbookLoading"
+       style="text-align:center;padding:60px 20px;color:#666;font-size:16px;background:#fff;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+    📄 正在加载 PDF，请稍候...
+  </div>
+
+  <!-- ===== 翻书主体容器 ===== -->
+  <div id="flipbookContainer" style="display:none;"></div>
+
+  <!-- ===== 页码显示（底部） ===== -->
+  <div id="flipbookPageInfo"
+       style="display:none;text-align:center;margin-top:12px;color:#666;font-size:14px;"></div>
+
+  <!-- ===== 操作提示 ===== -->
+  <div id="flipbookHint"
+       style="display:none;text-align:center;margin-top:8px;color:#999;font-size:12px;">
+    💡 点击书页左右两侧翻页 · 手机滑动翻页
+  </div>
+
+</div>
+
+<!-- ===== JavaScript 核心逻辑 ===== -->
+<script>
+/* ==============================================================
+   【配置区】在这里修改参数
+   ============================================================== */
+const PDF_URL     = '/pdfs/sample.pdf';  // PDF 文件路径（根相对路径）
+const RENDER_SCALE = 3;                  // 渲染清晰度（2=普通, 3=高清, 4=超清）
+const SOUND_ENABLED = true;              // 是否默认开启翻书音效
+
+// 5 个翻书音效文件路径（根相对路径）
+const SOUND_FILES = [
+  '/pdfs/sounds/flip1.mp3',
+  '/pdfs/sounds/flip2.mp3',
+  '/pdfs/sounds/flip3.mp3',
+  '/pdfs/sounds/flip4.mp3',
+  '/pdfs/sounds/flip5.mp3',
+];
+
+/* ==============================================================
+   全局变量
+   ============================================================== */
+let pageWidth = 0;     // PDF 单页原始宽度
+let pageHeight = 0;    // PDF 单页原始高度
+let totalPages = 0;    // 总页数
+let isFullscreen = false; // 是否全屏状态
+let soundOn = SOUND_ENABLED; // 音效开关
+let audioElements = []; // 预加载的音效元素数组
+let lastSoundIndex = -1; // 上一次播放的音效索引（避免连续重复）
+
+/* ==============================================================
+   工具函数：动态加载 JS 脚本
+   ============================================================== */
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('脚本加载失败: ' + src));
+    document.head.appendChild(s);
+  });
+}
+
+/* ==============================================================
+   预加载音效（提前加载到内存，翻页时立即播放无延迟）
+   ============================================================== */
+function preloadSounds() {
+  SOUND_FILES.forEach((url) => {
+    const audio = new Audio();
+    audio.src = url;
+    audio.preload = 'auto';
+    audio.volume = 0.6; // 默认音量 60%
+    audioElements.push(audio);
+  });
+}
+
+/* ==============================================================
+   随机播放一个翻书音效
+   ============================================================== */
+function playFlipSound() {
+  if (!soundOn) return;
+  if (audioElements.length === 0) return;
+
+  // 随机选一个，但尽量不要和上一个一样
+  let index;
+  if (audioElements.length <= 1) {
+    index = 0;
+  } else {
+    do {
+      index = Math.floor(Math.random() * audioElements.length);
+    } while (index === lastSoundIndex);
+  }
+  lastSoundIndex = index;
+
+  const audio = audioElements[index];
+  // 重置到开头再播放（支持快速连续翻页）
+  audio.currentTime = 0;
+  audio.play().catch(() => {
+    // 播放失败静默处理（比如浏览器自动播放限制）
+  });
+}
+
+/* ==============================================================
+   音效开关切换
+   ============================================================== */
+function toggleSound() {
+  soundOn = !soundOn;
+  const btn = document.getElementById('soundBtn');
+  if (soundOn) {
+    btn.textContent = '🔊 音效开';
+    playFlipSound(); // 切换时播一个作为反馈
+  } else {
+    btn.textContent = '🔇 音效关';
+  }
+}
+
+/* ==============================================================
+   下载 PDF
+   ============================================================== */
+function downloadPdf() {
+  const a = document.createElement('a');
+  a.href = PDF_URL;
+  a.download = PDF_URL.split('/').pop();
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+/* ==============================================================
+   计算合适的书本尺寸（确保不超出屏幕）
+   ============================================================== */
+function calcBookSize() {
+  const root = document.getElementById('flipbookRoot');
+  const containerWidth = root.clientWidth - 20;
+
+  let availableHeight;
+  if (isFullscreen) {
+    availableHeight = window.innerHeight - 120; // 减去工具栏和页码
+  } else {
+    availableHeight = 2000; // 普通模式高度不限
+  }
+
+  const bookWidth = pageWidth * 2; // 左右两页
+  const aspect = bookWidth / pageHeight;
+
+  const heightByWidth = containerWidth / aspect;
+  const widthByHeight = availableHeight * aspect;
+
+  let finalWidth, finalHeight;
+  if (heightByWidth <= availableHeight) {
+    finalWidth = containerWidth;
+    finalHeight = heightByWidth;
+  } else {
+    finalWidth = widthByHeight;
+    finalHeight = availableHeight;
+  }
+
+  return {
+    maxWidth: Math.max(300, finalWidth),
+    maxHeight: Math.max(300, finalHeight),
+  };
+}
+
+/* ==============================================================
+   主函数：加载库 → 渲染 PDF → 初始化翻书
+   ============================================================== */
+async function initFlipbook() {
+  const loadingEl   = document.getElementById('flipbookLoading');
+  const containerEl = document.getElementById('flipbookContainer');
+  const infoEl      = document.getElementById('flipbookPageInfo');
+  const infoTopEl   = document.getElementById('flipbookPageInfoTop');
+  const toolbarEl   = document.getElementById('flipbookToolbar');
+  const hintEl      = document.getElementById('flipbookHint');
+
+  try {
+    // 预加载音效
+    preloadSounds();
+
+    // 加载 PDF.js
+    await loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js');
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+    // 加载 page-flip
+    await loadScript('https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js');
+    const PageFlipClass = window.PageFlip || (window.St && window.St.PageFlip);
+    if (!PageFlipClass) throw new Error('page-flip 库加载失败');
+
+    // 加载 PDF
+    const pdf = await pdfjsLib.getDocument(PDF_URL).promise;
+    totalPages = pdf.numPages;
+
+    const firstPage = await pdf.getPage(1);
+    const viewport = firstPage.getViewport({ scale: 1 });
+    pageWidth = viewport.width;
+    pageHeight = viewport.height;
+
+    // 逐页渲染为图片
+    const pageImages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      const page = await pdf.getPage(i);
+      const scaledViewport = page.getViewport({ scale: RENDER_SCALE });
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = scaledViewport.width;
+      canvas.height = scaledViewport.height;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      await page.render({
+        canvasContext: ctx,
+        viewport: scaledViewport
+      }).promise;
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      pageImages.push(dataUrl);
+      loadingEl.innerHTML = `📄 正在渲染第 ${i} / ${totalPages} 页...`;
+    }
+
+    // 初始化翻书
+    const size = calcBookSize();
+    const flipbook = new PageFlipClass(containerEl, {
+      width: pageWidth,
+      height: pageHeight,
+      size: 'stretch',
+      minWidth: 300,
+      maxWidth: size.maxWidth,
+      minHeight: 300,
+      maxHeight: size.maxHeight,
+      drawShadow: true,
+      flippingTime: 800,
+      usePortrait: true,
+      startPage: 0,
+      clickEventForward: true,  // 点击翻页（主要翻页方式）
+      showCover: true,
+      mobileScrollSupport: true, // 手机滑动翻页
+      swipeDistance: 50,
+    });
+
+    flipbook.loadFromImages(pageImages);
+    window.myFlipbook = flipbook;
+
+    // 翻页事件：更新页码 + 播放音效
+    flipbook.on('flip', (e) => {
+      const pageNum = e.data + 1;
+      infoEl.textContent = `第 ${pageNum} 页 / 共 ${totalPages} 页`;
+      if (infoTopEl) infoTopEl.textContent = `第 ${pageNum}/${totalPages} 页`;
+      playFlipSound();
+    });
+
+    // 显示翻书
+    loadingEl.style.display = 'none';
+    toolbarEl.style.display = 'flex';
+    containerEl.style.display = 'block';
+    infoEl.style.display = 'block';
+    hintEl.style.display = 'block';
+    infoEl.textContent = `第 1 页 / 共 ${totalPages} 页`;
+    if (infoTopEl) infoTopEl.textContent = `第 1/${totalPages} 页`;
+
+    // 初始化音效按钮文字
+    const soundBtn = document.getElementById('soundBtn');
+    soundBtn.textContent = soundOn ? '🔊 音效开' : '🔇 音效关';
+
+  } catch (err) {
+    loadingEl.innerHTML =
+      '❌ 加载失败：' + err.message +
+      '<br><br>💡 常见原因：' +
+      '<br>1. PDF 文件路径不对（检查文件名和大小写）' +
+      '<br>2. 网络无法访问 CDN（jsdelivr）' +
+      '<br>3. PDF 文件损坏或有密码保护';
+    console.error('翻书初始化失败:', err);
+  }
+}
+
+/* ==============================================================
+   全屏切换
+   ============================================================== */
+function toggleFullscreen() {
+  const root = document.getElementById('flipbookRoot');
+
+  if (!document.fullscreenElement) {
+    const req = root.requestFullscreen || root.webkitRequestFullscreen || root.msRequestFullscreen;
+    if (req) req.call(root);
+
+    isFullscreen = true;
+    root.style.background = '#1a1a1a';
+    root.style.padding = '20px';
+    root.style.maxWidth = 'none';
+    root.style.height = '100vh';
+    root.style.overflow = 'hidden';
+    root.style.display = 'flex';
+    root.style.flexDirection = 'column';
+    root.style.justifyContent = 'center';
+
+    document.getElementById('fullscreenBtn').textContent = '✕ 退出全屏';
+
+    setTimeout(() => {
+      if (window.myFlipbook) {
+        const size = calcBookSize();
+        window.myFlipbook.updateSettings({
+          maxWidth: size.maxWidth,
+          maxHeight: size.maxHeight,
+        });
+      }
+    }, 200);
+
+  } else {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    if (exit) exit.call(document);
+  }
+}
+
+/* ==============================================================
+   监听全屏变化（恢复样式）
+   ============================================================== */
+function handleFullscreenChange() {
+  const root = document.getElementById('flipbookRoot');
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    isFullscreen = false;
+    root.style.background = '';
+    root.style.padding = '20px 0';
+    root.style.maxWidth = '900px';
+    root.style.height = '';
+    root.style.overflow = '';
+    root.style.display = '';
+    root.style.flexDirection = '';
+    root.style.justifyContent = '';
+
+    document.getElementById('fullscreenBtn').textContent = '⛶ 全屏';
+
+    if (window.myFlipbook) {
+      const size = calcBookSize();
+      window.myFlipbook.updateSettings({
+        maxWidth: size.maxWidth,
+        maxHeight: size.maxHeight,
+      });
+    }
+  }
+}
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+/* ==============================================================
+   窗口大小变化时自动调整
+   ============================================================== */
+window.addEventListener('resize', () => {
+  if (window.myFlipbook) {
+    const size = calcBookSize();
+    window.myFlipbook.updateSettings({
+      maxWidth: size.maxWidth,
+      maxHeight: size.maxHeight,
+    });
+  }
+});
+
+/* ==============================================================
+   启动
+   ============================================================== */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initFlipbook);
+} else {
+  initFlipbook();
+}
+</script>
+
+<!-- ===== 嵌入代码结束 ===== -->

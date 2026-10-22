@@ -24,6 +24,7 @@ menu:
    标签: /tags/ || fas fa-tag
    分类: /categories/ || fas fa-list
    友情链接: /link/ || fas fa-link
+   冰箱: /fridge/ || fa-solid fa-box-archive
 
   # List||fas fa-list:
   #   Music: /music/ || fas fa-music
@@ -513,9 +514,9 @@ search:
   # https://docsearch.algolia.com/
   docsearch:
     appId: 8SQ2RK2JHW
-    apiKey: b0c416b66d263c581ecc4ecf50f485fb&experienceId=8SQ2RK2JHW
-    indexName: long_luvhub_cn_8sq2rk2jhw_pages
-    option:
+    apiKey: b0c416b66d263c581ecc4ecf50f485fb
+    indexName: long_luvhub_cn_8sq2rk2jhw_articles
+    option: {}
 
 # --------------------------------------
 # Share System
